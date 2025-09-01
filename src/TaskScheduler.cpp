@@ -55,9 +55,13 @@ void TaskScheduler::plan(int time_limit, std::vector<int> & proposed_schedule)
     {
         DefaultPlanner::schedule_plan_raw(limit, proposed_schedule, env);
     }
+    else  if (solver == 6)
+    {
+        DefaultPlanner::schedule_plan_flow_time_expanded(limit, proposed_schedule, env, background_flow, use_traffic, new_only);
+    }
     else
     {
-        std::cerr << "Invalid solver type. Please choose either 1 (matching) or 2 (flow)." << std::endl;
+        std::cerr << "Invalid solver type. Please choose either 1 (flow) or 3 (matching)." << std::endl;
         exit(1);
     }
 }

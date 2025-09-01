@@ -26,7 +26,7 @@ class TaskScheduler
 
         bool use_traffic = false;
         bool new_only = false;
-        int solver = 1; //1 matching, 2 flow
+        int solver = 1; //1 flow, 3 matching
         int max_matching_edges = INT_MAX;
 
 };

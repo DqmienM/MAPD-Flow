@@ -1,2 +1,2 @@
-./build/lifelong --inputFile ./instances/warehouseSmall/warehouseSmall_200.json -o outputs/warehouseSmall_200_out.json
+./build/lifelong --inputFile ./instances/warehouseSmall/warehouseSmall_200.json -o outputs/warehouseSmall_200_out.json --scheduleModel 6
 
