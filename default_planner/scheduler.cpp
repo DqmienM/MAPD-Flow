@@ -1075,28 +1075,72 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
     start_time = std::chrono::high_resolution_clock::now();
     
     // Create the graph
+    using NodePair = pair<ListDigraph::Node, ListDigraph::Node>;
+
     ListDigraph g;
     ListDigraph::NodeMap<int> supply(g);
     ListDigraph::ArcMap<double> cost(g);
     ListDigraph::ArcMap<int> capacity(g);
     ListDigraph::ArcMap<int> flow(g); // Store the flow for warm start
 
-    vector<ListDigraph::Node> map_nodes(env->map.size());
+    int num_flow_timesteps = 3;
+
+    // cout << "THIS IS A TEST AAAAAAAAAAAA" << num_flow_timesteps << endl;
+
+    // auto map_size = env->map.size();
+
+    
+    // OLD VERSION
+    // NodeVector map_nodes(map_size);
+    // vector<ListDigraph::Node> map_nodes(env->map.size());
+
+    // NEW VERSION
+    vector<vector<NodePair>> time_expanded_map(num_flow_timesteps, 
+        vector<NodePair>(env->map.size()));
 
     ListDigraph::Node source = g.addNode(); // Source node
     ListDigraph::Node sink = g.addNode();   // Sink node
 
     unordered_map<int, int> node_to_maploc; // map graph node id to env->map index
+
+    // I DONT KNOW IF THIS IS NEEDED???
+    // Can be replaced by maploc_time_to_node (node a or node b)
     unordered_map<int, int> maploc_to_node; // reverse
 
-    // Create worker and task nodes
-    for (int i = 0 ; i < env->map.size(); ++i)
-    {
-        map_nodes[i] = g.addNode();
-        int id = lemon::ListDigraphBase::id(map_nodes[i]);
-        node_to_maploc[id] = i;
-        maploc_to_node[i] = id;
-    } 
+    // Create worker and task nodes, and other nodes on the map
+    // do this 2x (to connect nodes to themselves) and then T times
+
+    // OLD ASSIGNMENT
+    // for (int i = 0 ; i < env->map.size(); ++i)
+    // {
+    //     map_nodes[i] = g.addNode();
+    //     int id = lemon::ListDigraphBase::id(map_nodes[i]);
+    //     node_to_maploc[id] = i;
+    //     maploc_to_node[i] = id;
+    // } 
+
+    // NEW ASSIGNMENT
+    for(int i = 0; i < num_flow_timesteps; i++){
+      for(int j = 0; j < env->map.size(); j++){
+
+        time_expanded_map[i][j].first = g.addNode();
+        time_expanded_map[i][j].second = g.addNode();
+
+
+        // assign node to maploc (I think only one of these will actually need to be re-translated)
+        int id1 = lemon::ListDigraphBase::id(time_expanded_map[i][j].first);
+        node_to_maploc[id1] = j;
+
+        int id2 = lemon::ListDigraphBase::id(time_expanded_map[i][j].second);
+        node_to_maploc[id2] = j;
+
+        // Give node an arc pointing toward it's duplicate
+        ListDigraph::Arc a = g.addArc(time_expanded_map[i][j].first, time_expanded_map[i][j].second);
+        capacity[a] = 1;
+        cost[a] = 0; // No cost for checking if two agents can't be on same node
+      }
+    }
+
 
     // Set supply/demand values
     supply[source] = num_workers; // Source supplies workers
@@ -1124,6 +1168,8 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
         cost[a] = 0;
     }
 
+    // WANT TO MODIFY THIS IN PARTICULAR TO HAVE NEIGHBOURS TO FUTURE SELVES AND FUTURE ADJACENT LOCATIONS
+
     vector<int> neighbor = {-env->cols, 1, env->cols, -1};
 
     int  diff, d, op_flow, all_vertex_flow,vertex_flow;
@@ -1139,6 +1185,10 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
             if (neighbor_loc < 0 || neighbor_loc >= env->map.size() || env->map[neighbor_loc] != 0)
                 continue;
             ListDigraph::Arc a = g.addArc(map_nodes[loc], map_nodes[neighbor_loc]);
+
+
+
+
 
             if (use_traffic)
             {
@@ -1161,7 +1211,7 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
                 cost[a] = 1;
             }
 
-            capacity[a] = num_workers;
+            capacity[a] = 1; // Each arc has capacity 1 as nodes only have 1 agent on them at a time anyway
         }
     }
 
