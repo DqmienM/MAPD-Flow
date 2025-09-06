@@ -746,6 +746,8 @@ void schedule_plan_flow(int time_limit, std::vector<int> & proposed_schedule,  S
     {
         int cnt = 0;
 
+        cout << "YO YO YO: num workers = " << num_workers << endl;
+
         // cout << "Optimal assignment with minimum cost:" << endl;
         // Iterate over all worker nodes
         for (int i = 0; i < num_workers; i++) 
@@ -1083,9 +1085,7 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
     ListDigraph::ArcMap<int> flow(g); // Store the flow for warm start
 
     using NodePair = pair<ListDigraph::Node, ListDigraph::Node>;
-    int num_flow_timesteps = 3;
-
-    // cout << "THIS IS A TEST AAAAAAAAAAAA" << num_flow_timesteps << endl;
+    int num_flow_timesteps = 50;
 
     vector<vector<NodePair>> time_expanded_map(num_flow_timesteps, 
         vector<NodePair>(env->map.size()));
@@ -1142,7 +1142,8 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
         // Create the task sink and give it an arc to the sink
         ListDigraph::Node task_sink = g.addNode();
         ListDigraph::Arc task_sink_to_sink = g.addArc(task_sink, sink);
-        capacity[task_sink_to_sink] = 1;
+        // may have capacity of the number of tasks on the node, this may cause issues though
+        capacity[task_sink_to_sink] = task.second.size(); 
         cost[task_sink_to_sink] = 0; 
 
         // Each task at every time step has an arc to that task's sink
@@ -1175,10 +1176,21 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
               // Each node has an arc to ajacent nodes in the T+1 timestep
               ListDigraph::Arc a = g.addArc(time_expanded_map[t][loc].second, 
                 time_expanded_map[t+1][neighbor_loc].first);
-
               cost[a] = 1;
               capacity[a] = 1; // Each arc has capacity 1 as nodes only have 1 agent on them at a time anyway
+              
+              // Arc to itself at t+1
+              ListDigraph::Arc b = g.addArc(time_expanded_map[t][loc].second, 
+                time_expanded_map[t+1][loc].first);
+              cost[b] = 0;
+              capacity[b] = 1;
             }
+
+            // Add original map on the last layer
+            ListDigraph::Arc a = g.addArc(time_expanded_map[num_flow_timesteps-1][loc].second, 
+            time_expanded_map[num_flow_timesteps-1][neighbor_loc].second);
+            cost[a] = 1;
+            capacity[a] = num_workers;
         }
     }
 
@@ -1195,6 +1207,8 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
     {
         int cnt = 0;
 
+        cout << "Num Workers: " << num_workers << endl;
+
         // cout << "Optimal assignment with minimum cost:" << endl;
         // Iterate over all worker nodes
         for (int i = 0; i < num_workers; i++) 
@@ -1204,17 +1218,19 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
 
             list<int> path;
 
+            // cout << "CURRENT ID: " << lemon::ListDigraphBase::id(current) << endl;
+
+            // Keep looping as long as current doesn't have an entry in node_to_task_id
             while (node_to_task_id.find(lemon::ListDigraphBase::id(current)) == node_to_task_id.end()) 
             {
                 // Check if the current node is a task node
                 if (current == sink) break; // Reached sink, no task node found
 
-                // NEED TO SKIP DUPE NODE INSTANCES
-                // CHECK IF NODE ALREADY EXISTS IN THE PATH AT THE SAME TIME IN THE LAST INSTANCE
-
-
-                int loc = node_to_maploc[lemon::ListDigraphBase::id(current)];
-                path.push_back(loc);
+                // Add non duplicated nodes to the path 
+                if(! node_to_is_duplicate[lemon::ListDigraphBase::id(current)]){
+                  int loc = node_to_maploc[lemon::ListDigraphBase::id(current)];
+                  path.push_back(loc);
+                }                
 
                 // Follow the flow to the next node
                 // Find the next node in the path
@@ -1242,18 +1258,24 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
             {
                 int task_loc = node_to_task_id[lemon::ListDigraphBase::id(current)];
                 int task_id = task_loc_ids[task_loc].front();
+
                 // node_to_task_id[current].pop_front();
+
+                // each task should only have 1 agent assigned to it, task 0 is being assigned twice
+
                 path.push_back(task_loc);
-                // cout << "Worker " << i << " is assigned to Task " << task_id  << " through intermediate nodes." << endl;
+                cout << "Worker " << i << " is assigned to Task " << task_id  << " through intermediate nodes." << endl;
                 proposed_schedule[flexible_agent_ids[i]] = task_id;
-                if (use_traffic && env->curr_timestep >= 100)
-                    agent_guide_path[flexible_agent_ids[i]] = path;
                 task_loc_ids[task_loc].pop_front();
                 if (task_loc_ids[task_loc].empty())
                 {
                     task_loc_ids.erase(task_loc);
                     node_to_task_id.erase(lemon::ListDigraphBase::id(current));
                 }
+                cout << "End of block" << endl;
+
+
+
             }
             else 
             {
