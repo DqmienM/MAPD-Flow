@@ -1132,57 +1132,33 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
         cost[a] = 0; // No cost for assigning workers
     }
 
-    // Task Nodes to Task Sink (Non-Blocking sink variation)
+    // Make task location sinks with arcs to the sink, and tasks to their corresponding task sink
+
+    // Nodes to Task Location (Non-Blocking sink variation)
     unordered_map<int, int> node_to_task_loc;
 
     // If I'm going to do this, I need to enforce order of tasks somehow (front task/back task)
-    unordered_map<int, int> task_sink_to_task_id;
+    // unordered_map<int, int> task_sink_to_task_id;
 
-    // Alternative stack approach for this, this also corresponds to storing by location, not task
-    // unordered_map<int, list<int>> task_sink_to_task_ids;
-
-    for (auto &task_loc_id: task_loc_ids)
-    {
-        int loc = task_loc_id.first;
-
-        for (int task : task_loc_id.second) {
-          // Create the task sink and give it an arc to the sink
-          ListDigraph::Node task_sink = g.addNode();
-          ListDigraph::Arc task_sink_to_sink = g.addArc(task_sink, sink);
-          capacity[task_sink_to_sink] = 1; 
-          cost[task_sink_to_sink] = 0; 
-
-          // Each task at every time step has an arc to that task's sink
-          for(int i = 0; i < num_flow_timesteps; i++){ 
-            ListDigraph::Arc a = g.addArc(time_expanded_map[i][loc].second, task_sink);
-            
-            // THIS GETS OVERRIDDEN BY THE SECOND ONE
-            node_to_task_id[lemon::ListDigraphBase::id(time_expanded_map[i][loc].second)] = loc;
-
-            capacity[a] = 1;
-            cost[a] = 0;
-          }
-        }
-    }
-
-
-    // maintain a list of the top tasks
     for (auto task: task_loc_ids)
     {
       int loc = task.first;
-      auto tasks = task.second;
+      list<int> tasks_at_loc = task.second;
 
       ListDigraph::Node task_loc_sink = g.addNode();
       ListDigraph::Arc task_loc_sink_to_sink = g.addArc(task_loc_sink, sink);
-      capacity[task_loc_sink_to_sink] = task.second.size();
+      capacity[task_loc_sink_to_sink] = tasks_at_loc.size();
       cost[task_loc_sink_to_sink] = 0;
 
+      node_to_task_loc[lemon::ListDigraphBase::id(task_loc_sink)] = loc;
+
+      // Each task location node has an arc to the specific location sink
       for(int i = 0; i < num_flow_timesteps; i++){
-        ListDigraph::Arc a = g.addArc(time_expanded_map[i][loc].second, sink);
+        ListDigraph::Arc a = g.addArc(time_expanded_map[i][loc].second, task_loc_sink);
         capacity[a] = 1;
         cost[a] = 0;
 
-        node_to_task_loc[lemon::ListDigraphBase::id(time_expanded_map[i][loc].second)] = loc;
+        // node_to_task_loc[lemon::ListDigraphBase::id(time_expanded_map[i][loc].second)] = loc;
       }
        
     }
@@ -1250,8 +1226,8 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
             // SHOULD MODIFY THIS TO KEEP LOOPING UNTIL CURRENT NODE IS ACTUALLY A TASK SINK
             // KEEP TRACK OF PREVIOUS NODE SO THAT THE TASK ID CAN STILL BE REFERENCED
 
-            // Keep looping as long as current doesn't have an entry in node_to_task_id
-            while (node_to_task_id.find(lemon::ListDigraphBase::id(current)) == node_to_task_id.end()) 
+            // Keep looping as long as current doesn't have an entry in node_to_task_loc
+            while (node_to_task_loc.find(lemon::ListDigraphBase::id(current)) == node_to_task_loc.end()) 
             {
                 // Check if the current node is a task node
                 if (current == sink) break; // Reached sink, no task node found
@@ -1283,25 +1259,37 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
                 }
                 if (!found) break;  // No path found
             }
+
             // Now `current` should be a task node
-            if (node_to_task_id.find(lemon::ListDigraphBase::id(current)) != node_to_task_id.end()) 
+            if (node_to_task_loc.find(lemon::ListDigraphBase::id(current)) != node_to_task_loc.end()) 
             {
-                int task_loc = node_to_task_id[lemon::ListDigraphBase::id(current)];
+                int task_loc = node_to_task_loc[lemon::ListDigraphBase::id(current)];
+
+                // cout << "Task Location: " << task_loc << endl;
+
                 int task_id = task_loc_ids[task_loc].front();
-                
-                if (!task_loc_ids[task_loc].empty()){
-                  task_loc_ids[task_loc].pop_front(); // PROBLEM LINE causing errors
 
-                  path.push_back(task_loc);
-                  // cout << "Worker " << i << " is assigned to Task " << task_id  << " through intermediate nodes." << endl;
-                  proposed_schedule[flexible_agent_ids[i]] = task_id;
+                // for(int task : task_loc_ids[task_loc]){
+                //    cout << task << ",";
+                // }
+                // cout << endl;
 
-                } else {
+                // path.push_back(task_loc);
+                // cout << "Worker " << i << " is assigned to Task " << task_id  << " through intermediate nodes." << endl;
+                proposed_schedule[flexible_agent_ids[i]] = task_id;
+
+                task_loc_ids[task_loc].pop_front();
+
+                if (task_loc_ids[task_loc].empty())
+                {
                     task_loc_ids.erase(task_loc);
-                    node_to_task_id.erase(lemon::ListDigraphBase::id(current));
-
-                    cout << "Warning: attempted to pop from empty list at location " << task_loc << endl;
+                    node_to_task_loc.erase(lemon::ListDigraphBase::id(current));
                 }
+
+                //  for(int task : task_loc_ids[task_loc]){
+                //    cout << task << ",";
+                // }
+                // cout << endl;
 
             }
             else 
