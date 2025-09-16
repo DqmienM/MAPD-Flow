@@ -1134,11 +1134,8 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
 
     // Make task location sinks with arcs to the sink, and tasks to their corresponding task sink
 
-    // Nodes to Task Location (Non-Blocking sink variation)
+    // Node to Task Location (Non-Blocking sink variation)
     unordered_map<int, int> node_to_task_loc;
-
-    // If I'm going to do this, I need to enforce order of tasks somehow (front task/back task)
-    // unordered_map<int, int> task_sink_to_task_id;
 
     for (auto task: task_loc_ids)
     {
@@ -1157,13 +1154,11 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
         ListDigraph::Arc a = g.addArc(time_expanded_map[i][loc].second, task_loc_sink);
         capacity[a] = 1;
         cost[a] = 0;
-
-        // node_to_task_loc[lemon::ListDigraphBase::id(time_expanded_map[i][loc].second)] = loc;
       }
        
     }
 
-    // Make nodes adjacent to neightbours adjacent to them in the T+1 timestep
+    // Give nodes arcs to neighbours adjacent to them in the T+1 timestep
 
     vector<int> neighbor = {-env->cols, 1, env->cols, -1};
 
@@ -1183,14 +1178,15 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
               // Each node has an arc to ajacent nodes in the T+1 timestep
               ListDigraph::Arc a = g.addArc(time_expanded_map[t][loc].second, 
                 time_expanded_map[t+1][neighbor_loc].first);
-              cost[a] = 1;
               capacity[a] = 1; // Each arc has capacity 1 as nodes only have 1 agent on them at a time anyway
+              cost[a] = 1;
+              
               
               // Arc to itself at t+1
               ListDigraph::Arc b = g.addArc(time_expanded_map[t][loc].second, 
                 time_expanded_map[t+1][loc].first);
-              cost[b] = 0;
               capacity[b] = 1;
+              cost[b] = 1;
             }
 
             // Add original map on the last layer
@@ -1223,10 +1219,7 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
 
             list<int> path;
 
-            // SHOULD MODIFY THIS TO KEEP LOOPING UNTIL CURRENT NODE IS ACTUALLY A TASK SINK
-            // KEEP TRACK OF PREVIOUS NODE SO THAT THE TASK ID CAN STILL BE REFERENCED
-
-            // Keep looping as long as current doesn't have an entry in node_to_task_loc
+            // Keep looping until a task sink node is found
             while (node_to_task_loc.find(lemon::ListDigraphBase::id(current)) == node_to_task_loc.end()) 
             {
                 // Check if the current node is a task node
@@ -1260,21 +1253,12 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
                 if (!found) break;  // No path found
             }
 
-            // Now `current` should be a task node
+            // Now `current` should be a task sink node
             if (node_to_task_loc.find(lemon::ListDigraphBase::id(current)) != node_to_task_loc.end()) 
             {
                 int task_loc = node_to_task_loc[lemon::ListDigraphBase::id(current)];
-
-                // cout << "Task Location: " << task_loc << endl;
-
                 int task_id = task_loc_ids[task_loc].front();
 
-                // for(int task : task_loc_ids[task_loc]){
-                //    cout << task << ",";
-                // }
-                // cout << endl;
-
-                // path.push_back(task_loc);
                 // cout << "Worker " << i << " is assigned to Task " << task_id  << " through intermediate nodes." << endl;
                 proposed_schedule[flexible_agent_ids[i]] = task_id;
 
@@ -1285,12 +1269,6 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
                     task_loc_ids.erase(task_loc);
                     node_to_task_loc.erase(lemon::ListDigraphBase::id(current));
                 }
-
-                //  for(int task : task_loc_ids[task_loc]){
-                //    cout << task << ",";
-                // }
-                // cout << endl;
-
             }
             else 
             {
