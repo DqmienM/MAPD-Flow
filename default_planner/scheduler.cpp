@@ -1083,7 +1083,7 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
     ListDigraph::ArcMap<int> flow(g); // Store the flow for warm start
 
     using NodePair = pair<ListDigraph::Node, ListDigraph::Node>;
-    int num_flow_timesteps = 50;
+    int num_flow_timesteps = 20;
 
     vector<vector<NodePair>> time_expanded_map(num_flow_timesteps, 
         vector<NodePair>(env->map.size()));
@@ -1180,7 +1180,6 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
                 time_expanded_map[t+1][neighbor_loc].first);
               capacity[a] = 1; // Each arc has capacity 1 as nodes only have 1 agent on them at a time anyway
               cost[a] = 1;
-              
               
               // Arc to itself at t+1
               ListDigraph::Arc b = g.addArc(time_expanded_map[t][loc].second, 
