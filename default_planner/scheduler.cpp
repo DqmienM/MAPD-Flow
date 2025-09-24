@@ -1083,7 +1083,7 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
     ListDigraph::ArcMap<int> flow(g); // Store the flow for warm start
 
     using NodePair = pair<ListDigraph::Node, ListDigraph::Node>;
-    int num_flow_timesteps = 20;
+    int num_flow_timesteps = 50;
 
     vector<vector<NodePair>> time_expanded_map(num_flow_timesteps, 
         vector<NodePair>(env->map.size()));
@@ -1120,9 +1120,6 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
     supply[source] = num_workers; // Source supplies workers
     supply[sink] = -num_workers;  // Sink absorbs tasks
 
-    // ASK IF THIS IS NECESSARY
-    // for (int i = 0; i < num_workers; ++i) supply[time_expanded_map[0][i].first] = 0;
-
     // Source Node connects to each worker location
     for (int i = 0; i < num_workers; ++i) 
     {
@@ -1150,9 +1147,9 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
       node_to_task_loc[lemon::ListDigraphBase::id(task_loc_sink)] = loc;
 
       // Each task location node has an arc to the specific location sink
-      for(int i = 0; i < num_flow_timesteps; i++){
-        ListDigraph::Arc a = g.addArc(time_expanded_map[i][loc].second, task_loc_sink);
-        capacity[a] = 1;
+      for(int t = 0; t < num_flow_timesteps; t++){
+        ListDigraph::Arc a = g.addArc(time_expanded_map[t][loc].second, task_loc_sink);
+        capacity[a] = t == num_flow_timesteps - 1 ? num_workers : 1;
         cost[a] = 0;
       }
        
@@ -1168,31 +1165,35 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
     for (int loc = 0; loc < env->map.size(); loc++)
     {
         if (env->map[loc] != 0) continue;
+
+        // Arc to itself at T+1
+        for (int t = 0; t < num_flow_timesteps - 1; t++){
+          ListDigraph::Arc a = g.addArc(time_expanded_map[t][loc].second, 
+            time_expanded_map[t+1][loc].first);
+          capacity[a] = 1;
+          cost[a] = 1;
+        }
+
         //try four directions
         for (int i = 0; i < 4; i++)
         {
             int neighbor_loc = loc + neighbor[i];
             if (neighbor_loc < 0 || neighbor_loc >= env->map.size() || env->map[neighbor_loc] != 0)
                 continue;
+
+            // Each node has an arc to ajacent nodes in the T+1 timestep
             for (int t = 0; t < num_flow_timesteps - 1; t++){
-              // Each node has an arc to ajacent nodes in the T+1 timestep
-              ListDigraph::Arc a = g.addArc(time_expanded_map[t][loc].second, 
-                time_expanded_map[t+1][neighbor_loc].first);
-              capacity[a] = 1; // Each arc has capacity 1 as nodes only have 1 agent on them at a time anyway
-              cost[a] = 1;
-              
-              // Arc to itself at t+1
               ListDigraph::Arc b = g.addArc(time_expanded_map[t][loc].second, 
-                time_expanded_map[t+1][loc].first);
-              capacity[b] = 1;
+                time_expanded_map[t+1][neighbor_loc].first);
+              capacity[b] = 1; // Each arc has capacity 1 as nodes only have 1 agent on them at a time anyway
               cost[b] = 1;
             }
 
             // Add original map on the last layer
-            ListDigraph::Arc a = g.addArc(time_expanded_map[num_flow_timesteps-1][loc].second, 
+            ListDigraph::Arc c = g.addArc(time_expanded_map[num_flow_timesteps-1][loc].second, 
             time_expanded_map[num_flow_timesteps-1][neighbor_loc].second);
-            cost[a] = 1;
-            capacity[a] = num_workers;
+            cost[c] = 1;
+            capacity[c] = num_workers;
         }
     }
 
