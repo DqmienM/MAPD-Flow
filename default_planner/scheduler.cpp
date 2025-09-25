@@ -1149,7 +1149,7 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
       // Each task location node has an arc to the specific location sink
       for(int t = 0; t < num_flow_timesteps; t++){
         ListDigraph::Arc a = g.addArc(time_expanded_map[t][loc].second, task_loc_sink);
-        capacity[a] = t == num_flow_timesteps - 1 ? num_workers : 1;
+        capacity[a] = t == num_flow_timesteps - 1 ? tasks_at_loc.size() : 1; // Last layer has capacity for static map flow network
         cost[a] = 0;
       }
        
