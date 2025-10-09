@@ -1,2 +1,3 @@
-./build/lifelong --inputFile ./instances/warehouseSmall/warehouseSmall_100.json -o outputs/output_new.json --scheduleModel 6
+./build/lifelong --inputFile ./instances/warehouseSmall/warehouseSmall_100.json -o outputs/ws100_new.json --scheduleModel 6
 
+--simulationTime 1000
