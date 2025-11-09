@@ -1083,7 +1083,7 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
     ListDigraph::ArcMap<int> flow(g); // Store the flow for warm start
 
     using NodePair = pair<ListDigraph::Node, ListDigraph::Node>;
-    int num_flow_timesteps = 50;
+    int num_flow_timesteps = 20;
 
     vector<vector<NodePair>> time_expanded_map(num_flow_timesteps, 
         vector<NodePair>(env->map.size()));
