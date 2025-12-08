@@ -23,18 +23,41 @@ void Entry::initialize(int preprocess_time_limit)
 void Entry::compute(int time_limit, std::vector<Action> & plan, std::vector<int> & proposed_schedule)
 {
 
+
+  if(scheduler->solver == 6){
+    scheduler->set_flow(planner->get_flow());
+    scheduler->plan(time_limit,proposed_schedule);
+
+    //then update the first unfinished errand/location of tasks for planner reference
+    update_goal_locations(proposed_schedule);
+    
+    //call the planner to compute the actions
+    planner->plan(time_limit,plan);
+
+  }
+  else{
+    scheduler->set_flow(planner->get_flow());
+    scheduler->plan(time_limit,proposed_schedule);
+
+    //then update the first unfinished errand/location of tasks for planner reference
+    update_goal_locations(proposed_schedule);
+    
+    //call the planner to compute the actions
+    planner->plan(time_limit,plan);
+  }
+
     // if (time_in_commit_window == 0)
     // {
          //first call task schedule
 
-        scheduler->set_flow(planner->get_flow());
-        scheduler->plan(time_limit,proposed_schedule);
+        // scheduler->set_flow(planner->get_flow());
+        // scheduler->plan(time_limit,proposed_schedule);
 
-        //then update the first unfinished errand/location of tasks for planner reference
-        update_goal_locations(proposed_schedule);
+        // //then update the first unfinished errand/location of tasks for planner reference
+        // update_goal_locations(proposed_schedule);
         
-        //call the planner to compute the actions
-        planner->plan(time_limit,plan);
+        // //call the planner to compute the actions
+        // planner->plan(time_limit,plan);
     // }
     // else
     // {
