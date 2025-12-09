@@ -1027,7 +1027,7 @@ void schedule_plan_flow_hist(int time_limit, std::vector<int> & proposed_schedul
 
 }
 
-void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & proposed_schedule,  SharedEnvironment* env, std::vector<Double4> background_flow, bool use_traffic, bool new_only)
+void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & proposed_schedule,  SharedEnvironment* env, std::vector<Double4> background_flow, bool use_traffic, bool new_only, int num_network_timesteps)
 {
     auto start_time = std::chrono::high_resolution_clock::now();
 
@@ -1083,9 +1083,8 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
     ListDigraph::ArcMap<int> flow(g); // Store the flow for warm start
 
     using NodePair = pair<ListDigraph::Node, ListDigraph::Node>;
-    int num_flow_timesteps = 20;
 
-    vector<vector<NodePair>> time_expanded_map(num_flow_timesteps, 
+    vector<vector<NodePair>> time_expanded_map(num_network_timesteps, 
         vector<NodePair>(env->map.size()));
 
     ListDigraph::Node source = g.addNode(); // Source node
@@ -1095,7 +1094,7 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
     unordered_map<int, bool> node_to_is_duplicate; // map graph node id to whether it is a duplicate
 
     // Create a node (and its duplicate to prevent collisions) for every location on the map
-    for(int i = 0; i < num_flow_timesteps; i++){
+    for(int i = 0; i < num_network_timesteps; i++){
       for(int j = 0; j < env->map.size(); j++){
 
         time_expanded_map[i][j].first = g.addNode();
@@ -1147,9 +1146,9 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
       node_to_task_loc[lemon::ListDigraphBase::id(task_loc_sink)] = loc;
 
       // Each task location node has an arc to the specific location sink
-      for(int t = 0; t < num_flow_timesteps; t++){
+      for(int t = 0; t < num_network_timesteps; t++){
         ListDigraph::Arc a = g.addArc(time_expanded_map[t][loc].second, task_loc_sink);
-        capacity[a] = t == num_flow_timesteps - 1 ? tasks_at_loc.size() : 1; // Last layer has capacity for static map flow network
+        capacity[a] = t == num_network_timesteps - 1 ? tasks_at_loc.size() : 1; // Last layer has capacity for static map flow network
         cost[a] = 0;
       }
        
@@ -1167,7 +1166,7 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
         if (env->map[loc] != 0) continue;
 
         // Arc to itself at T+1
-        for (int t = 0; t < num_flow_timesteps - 1; t++){
+        for (int t = 0; t < num_network_timesteps - 1; t++){
           ListDigraph::Arc a = g.addArc(time_expanded_map[t][loc].second, 
             time_expanded_map[t+1][loc].first);
           capacity[a] = 1;
@@ -1182,7 +1181,7 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
                 continue;
 
             // Each node has an arc to ajacent nodes in the T+1 timestep
-            for (int t = 0; t < num_flow_timesteps - 1; t++){
+            for (int t = 0; t < num_network_timesteps - 1; t++){
               ListDigraph::Arc b = g.addArc(time_expanded_map[t][loc].second, 
                 time_expanded_map[t+1][neighbor_loc].first);
               capacity[b] = 1; // Each arc has capacity 1 as nodes only have 1 agent on them at a time anyway
@@ -1190,8 +1189,8 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
             }
 
             // Add original map on the last layer
-            ListDigraph::Arc c = g.addArc(time_expanded_map[num_flow_timesteps-1][loc].second, 
-            time_expanded_map[num_flow_timesteps-1][neighbor_loc].second);
+            ListDigraph::Arc c = g.addArc(time_expanded_map[num_network_timesteps-1][loc].second, 
+            time_expanded_map[num_network_timesteps-1][neighbor_loc].second);
             cost[c] = 1;
             capacity[c] = num_workers;
         }
