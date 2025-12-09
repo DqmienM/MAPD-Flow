@@ -21,6 +21,7 @@ class TaskScheduler
         void set_new_only(bool new_only);
         void set_solver(int solver);
         void set_max_matching_edges(int max_matching_edges);
+        void set_num_network_timesteps(int num_network_timesteps);
 
         std::vector<DefaultPlanner::Double4> background_flow;
 
@@ -28,5 +29,5 @@ class TaskScheduler
         bool new_only = false;
         int solver = 1; //1 flow, 3 matching
         int max_matching_edges = INT_MAX;
-
+        int num_network_timesteps = 1;
 };
