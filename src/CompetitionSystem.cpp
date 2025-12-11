@@ -234,7 +234,7 @@ void BaseSystem::saveResults(const string &fileName, int screen) const
     json js;
     // Save action model
     js["actionModel"] = "MAPF";
-    //js["version"] = "2024 LoRR";
+    js["version"] = "2024 LoRR";
 
     // std::string feasible = fast_mover_feasible ? "Yes" : "No";
     // js["AllValid"] = feasible;

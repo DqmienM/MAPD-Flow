@@ -11,10 +11,12 @@ vector<State> Simulator::move(vector<Action>& actions)
         all_valid = false;
         if (k >= actions.size()){
             planner_movement[k] = Action::NA;
+            planner_movements[k].push_back(Action::NA);
         }
         else
         {
             planner_movement[k] = actions[k];
+            planner_movements[k].push_back(actions[k]);
         }
     }
 
@@ -30,9 +32,9 @@ vector<State> Simulator::move(vector<Action>& actions)
 
     // cout<<"movements:"<<endl;
 
-    // for (int k = 0; k < num_of_agents; k++){
-    //     paths[k].push_back(curr_states[k]);
-    //     // actual_movements[k].push_back(actions[k]);
+    for (int k = 0; k < num_of_agents; k++){
+        paths[k].push_back(curr_states[k]);
+        actual_movements[k].push_back(actions[k]);
     //     if (actions[k] == Action::N)
     //         {
     //             cout<<"NO";
@@ -58,7 +60,7 @@ vector<State> Simulator::move(vector<Action>& actions)
     //             cout<<"W";
     //         }
     //         cout<<",";
-    //}
+    }
     // cout<<endl;
     //return move_valid;
     return curr_states;
@@ -154,19 +156,19 @@ json Simulator::actual_path_to_json() const
             // }
             if (action == Action::N)
             {
-                path+="NO";
+                path+="U";
             }
             else if (action == Action::E)
             {
-                path+="EA";
+                path+="R";
             } 
             else if (action == Action::S)
             {
-                path+="SO";
+                path+="D";
             }
             else if (action == Action::WE)
             {
-                path+="WE";
+                path+="L";
             }
             else if (action == Action::NA)
             {
@@ -225,19 +227,19 @@ json Simulator::planned_path_to_json() const
             // }
             if (action == Action::N)
             {
-                path+="NO";
+                path+="U";
             }
             else if (action == Action::E)
             {
-                path+="EA";
+                path+="R";
             } 
             else if (action == Action::S)
             {
-                path+="SO";
+                path+="D";
             }
             else if (action == Action::WE)
             {
-                path+="WE";
+                path+="L";
             }
             else if (action == Action::NA)
             {
