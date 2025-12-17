@@ -209,6 +209,7 @@ namespace DefaultPlanner{
         {
             if (std::chrono::steady_clock::now() >end_time)
             {
+                cout<<i+1<<"/"<<env->num_of_agents<<" agents' paths completed"<<endl; 
                 cout<<"compute initial stop until "<<i<<endl;
                 break;
             }
@@ -240,7 +241,7 @@ namespace DefaultPlanner{
             }
         );
 
-        // cout <<"time used: " <<  std::chrono::duration_cast<milliseconds>(std::chrono::steady_clock::now() - env->plan_start_time).count() <<endl;;
+        cout <<"planner time used: " <<  std::chrono::duration_cast<milliseconds>(std::chrono::steady_clock::now() - env->plan_start_time).count() <<endl;;
         //pibt
         for (int i : ids)
         {

@@ -14,11 +14,11 @@ public:
     MAPFPlanner(){env = new SharedEnvironment();};
 	virtual ~MAPFPlanner(){delete env;};
 
-
     virtual void initialize(int preprocess_time_limit);
 
     // return next states for all agents
     virtual void plan(int time_limit, std::vector<Action> & plan);
+    virtual void plan_time_expanded(int time_limit, std::vector<Action> & plan);
 
     std::vector<DefaultPlanner::Double4> get_flow();
     void plan_pibt(int time_limit,vector<Action> & actions); 

@@ -3,6 +3,7 @@
 
 //default planner includes
 #include "const.h"
+#include "MAPFPlanner.h"
 
 /**
  * Initialises the MAPF planner with a given time limit for preprocessing.
@@ -38,7 +39,18 @@ void MAPFPlanner::plan(int time_limit,vector<Action> & actions)
     return;
 }
 
-void MAPFPlanner::plan_pibt(int time_limit,vector<Action> & actions) 
+void MAPFPlanner::plan_time_expanded(int time_limit, std::vector<Action> & actions)
+{
+  int time_expanded_planner_tolerance = 30;
+  // use the remaining time after task schedule for path planning, -PLANNER_TIMELIMIT_TOLERANCE for timing error tolerance;
+  //cout<<time_limit<<" "<<std::chrono::duration_cast<milliseconds>(std::chrono::steady_clock::now() - env->plan_start_time).count()<<" "<< DefaultPlanner::PLANNER_TIMELIMIT_TOLERANCE<<endl;
+  int limit = time_limit - std::chrono::duration_cast<milliseconds>(std::chrono::steady_clock::now() - env->plan_start_time).count() - DefaultPlanner::PLANNER_TIMELIMIT_TOLERANCE - time_expanded_planner_tolerance;
+
+  DefaultPlanner::plan(limit, actions, env, DefaultPlanner::get_guide_path());
+  return;
+}
+
+void MAPFPlanner::plan_pibt(int time_limit, vector<Action> &actions)
 {
     // use the remaining time after task schedule for path planning, -PLANNER_TIMELIMIT_TOLERANCE for timing error tolerance;
     //cout<<time_limit<<" "<<std::chrono::duration_cast<milliseconds>(std::chrono::steady_clock::now() - env->plan_start_time).count()<<" "<< DefaultPlanner::PLANNER_TIMELIMIT_TOLERANCE<<endl;
