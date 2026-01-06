@@ -9,7 +9,7 @@
 namespace DefaultPlanner{
 
     
-    void initialize(int preprocess_time_limit, SharedEnvironment* env);
+    void initialize(int preprocess_time_limit, SharedEnvironment* env, int num_network_timesteps);
 
     void plan(int time_limit,vector<Action> & actions,  SharedEnvironment* env, unordered_map<int,list<int>> agent_guide_path);
 

@@ -23,6 +23,7 @@ namespace DefaultPlanner{
     std::vector<int> dummy_goals;
     std::mt19937 mt1;
     TrajLNS trajLNS;
+    int num_network_timesteps;
 
 
     // std::vector<Int4> get_flow() 
@@ -67,7 +68,7 @@ namespace DefaultPlanner{
      * 
      * The initialization function initializes the default planner data structures and heuristics tables.
      */
-    void initialize(int preprocess_time_limit, SharedEnvironment* env){
+    void initialize(int preprocess_time_limit, SharedEnvironment* env, int num_network_timesteps){
             //initialise all required data structures
             assert(env->num_of_agents != 0);
             p.resize(env->num_of_agents);
@@ -82,6 +83,7 @@ namespace DefaultPlanner{
             for (int i = 0; i < ids.size();i++){
                 ids[i] = i;
             }
+            DefaultPlanner::num_network_timesteps = num_network_timesteps;
 
             // initialise the heuristics tables containers
             init_heuristics(env);

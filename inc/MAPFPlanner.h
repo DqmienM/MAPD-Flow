@@ -9,12 +9,13 @@ class MAPFPlanner
 {
 public:
     SharedEnvironment* env;
+    int num_network_timesteps = 1;
 
 	MAPFPlanner(SharedEnvironment* env): env(env){};
     MAPFPlanner(){env = new SharedEnvironment();};
 	virtual ~MAPFPlanner(){delete env;};
 
-    virtual void initialize(int preprocess_time_limit);
+    virtual void initialize(int preprocess_time_limit, int num_network_timesteps);
 
     // return next states for all agents
     virtual void plan(int time_limit, std::vector<Action> & plan);
@@ -22,5 +23,4 @@ public:
 
     std::vector<DefaultPlanner::Double4> get_flow();
     void plan_pibt(int time_limit,vector<Action> & actions); 
-
 };
