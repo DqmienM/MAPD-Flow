@@ -16,7 +16,6 @@ void MAPFPlanner::initialize(int preprocess_time_limit, int num_network_timestep
 {
     // use the remaining entry time limit (after task scheduling) for path planning, -PLANNER_TIMELIMIT_TOLERANCE for timing error tolerance;
     int limit = preprocess_time_limit - std::chrono::duration_cast<milliseconds>(std::chrono::steady_clock::now() - env->plan_start_time).count() - DefaultPlanner::PLANNER_TIMELIMIT_TOLERANCE;
-    this->num_network_timesteps = num_network_timesteps;
     DefaultPlanner::initialize(limit, env, num_network_timesteps);
     return;
 }

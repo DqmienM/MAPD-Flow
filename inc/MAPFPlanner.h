@@ -9,7 +9,6 @@ class MAPFPlanner
 {
 public:
     SharedEnvironment* env;
-    int num_network_timesteps = 1;
 
 	MAPFPlanner(SharedEnvironment* env): env(env){};
     MAPFPlanner(){env = new SharedEnvironment();};
