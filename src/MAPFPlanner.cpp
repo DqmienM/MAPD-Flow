@@ -65,3 +65,7 @@ std::vector<DefaultPlanner::Double4> MAPFPlanner::get_flow()
     // return DefaultPlanner::get_flow();
     return DefaultPlanner::get_opened_flow(env);
 }
+
+void MAPFPlanner::set_num_network_timesteps(int num_network_timesteps){
+  this->num_network_timesteps = num_network_timesteps;
+}

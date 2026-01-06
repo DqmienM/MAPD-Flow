@@ -91,3 +91,6 @@ void TaskScheduler::set_num_network_timesteps(int num_network_timesteps)
 {
     this->num_network_timesteps = num_network_timesteps;
 }
+int TaskScheduler::get_num_network_timesteps(){
+  return this->num_network_timesteps;
+}

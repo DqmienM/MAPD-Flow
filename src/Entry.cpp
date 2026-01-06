@@ -13,6 +13,7 @@ void Entry::initialize(int preprocess_time_limit)
     env->accu_waitings.resize(env->num_of_agents,0);
     scheduler->initialize(preprocess_time_limit);
     planner->initialize(preprocess_time_limit);
+    planner->set_num_network_timesteps(scheduler->get_num_network_timesteps());
 }
 
 //The compute function will be called by competition system on each timestep.
