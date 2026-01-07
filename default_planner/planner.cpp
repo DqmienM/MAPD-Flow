@@ -24,6 +24,7 @@ namespace DefaultPlanner{
     std::mt19937 mt1;
     TrajLNS trajLNS;
     int num_network_timesteps;
+    unordered_map<int, vector<int>> delivery_agent_paths;
 
 
     // std::vector<Int4> get_flow() 
@@ -31,7 +32,12 @@ namespace DefaultPlanner{
     //     return trajLNS.flow;
     // }
 
-    std::vector<Double4> get_opened_flow(SharedEnvironment* env)
+    unordered_map<int, vector<int>> get_delivery_agent_paths()
+    {
+      return delivery_agent_paths;
+    }
+
+    std::vector<Double4> get_opened_flow(SharedEnvironment *env)
     {
         double decay = 1;
         std::vector<Double4> background_flow(env->map.size(),Double4{0,0,0,0});
