@@ -84,6 +84,7 @@ namespace DefaultPlanner{
             decided.resize(env->num_of_agents,DCR({-1,DONE::DONE}));
             occupied.resize(env->map.size(),false);
             checked.resize(env->num_of_agents,false);
+            is_delivering.resize(env->num_of_agents,false);
             ids.resize(env->num_of_agents);
             require_guide_path.resize(env->num_of_agents,false);
             for (int i = 0; i < ids.size();i++){
@@ -132,6 +133,11 @@ namespace DefaultPlanner{
         //traffic flow assignment end time, leave PIBT_RUNTIME_PER_100_AGENTS ms per 100 agent and TRAFFIC_FLOW_ASSIGNMENT_END_TIME_TOLERANCE ms for computing pibt actions;
         TimePoint end_time = start_time + std::chrono::milliseconds(time_limit - pibt_time - TRAFFIC_FLOW_ASSIGNMENT_END_TIME_TOLERANCE); 
         cout << "plan limit " << time_limit <<endl;
+        // reset delivery agent paths and is_delivering to restart in this time-step
+        delivery_agent_paths.clear();
+        for(int i = 0; i < env->num_of_agents; i++){
+          is_delivering[i] = false;
+        }
 
         // recrod the initial location of each agent as dummy goals in case no goal is assigned to the agent.
         if (env->curr_timestep == 0){
@@ -162,6 +168,10 @@ namespace DefaultPlanner{
                 }
             }
             
+            // Check if the agent is delivering a task
+            if (env->goal_locations[i].size() == 1){
+              is_delivering[i] = true;
+            }
 
             // set the goal location of each agent
             if (env->goal_locations[i].empty()){
@@ -290,7 +300,21 @@ namespace DefaultPlanner{
         //     }
         // }
 
+        // Add first path step to delivering agents
+        for (int i = 0; i < env->num_of_agents;i++)
+        {
+          if(is_delivering[i]){
+            delivery_agent_paths[i].push_back(next_states[i].location);
+          }
+        }
 
+        for(const auto& [agent, path_states] : delivery_agent_paths){
+          cout << "agent" << agent << ": ";
+          for(int i = 0; i < path_states.size(); i++){
+            cout << path_states[i] << ", ";
+          }
+          cout << endl;
+        }
 
         prev_states = next_states;
         return;
