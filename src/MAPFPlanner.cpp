@@ -47,6 +47,8 @@ void MAPFPlanner::plan_time_expanded(int time_limit, std::vector<Action> & actio
   int limit = time_limit - std::chrono::duration_cast<milliseconds>(std::chrono::steady_clock::now() - env->plan_start_time).count() - DefaultPlanner::PLANNER_TIMELIMIT_TOLERANCE - time_expanded_planner_tolerance;
 
   DefaultPlanner::plan(limit, actions, env, DefaultPlanner::get_guide_path());
+  // Run multiple plan instances and store a guide path in order to pass it to the scheduler to use in the time-expanded flow
+  DefaultPlanner::plan_future_deliveries(limit, env);
   return;
 }
 

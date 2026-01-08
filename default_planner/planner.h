@@ -13,6 +13,8 @@ namespace DefaultPlanner{
 
     void plan(int time_limit,vector<Action> & actions,  SharedEnvironment* env, unordered_map<int,list<int>> agent_guide_path);
 
+    void plan_future_deliveries(int time_limit, SharedEnvironment* env);
+
     // std::vector<Int4> get_flow();
 
     unordered_map<int,vector<int>> get_delivery_agent_paths();

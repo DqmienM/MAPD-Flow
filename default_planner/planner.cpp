@@ -135,7 +135,7 @@ namespace DefaultPlanner{
         // reset delivery agent paths and is_delivering to restart in this time-step
         delivering_agent_paths.clear();
 
-        // recrod the initial location of each agent as dummy goals in case no goal is assigned to the agent.
+        // record the initial location of each agent as dummy goals in case no goal is assigned to the agent.
         if (env->curr_timestep == 0){
             dummy_goals.resize(env->num_of_agents);
             for(int i=0; i<env->num_of_agents; i++)
@@ -144,7 +144,7 @@ namespace DefaultPlanner{
             }
         }
 
-        // data sturcture for record the previous decision of each agent
+        // data structure for recording the previous decision of each agent
         prev_decision.clear();
         prev_decision.resize(env->map.size(), -1);
 
@@ -291,7 +291,7 @@ namespace DefaultPlanner{
         //     }
         // }
 
-        // Add first path step to delivery agents
+        // Add first path step for delivering agents 
         for (int agent_id = 0; agent_id < env->num_of_agents; agent_id++)
         {
           int task_id = env->curr_task_schedule[agent_id];
@@ -304,7 +304,31 @@ namespace DefaultPlanner{
 
         prev_states = next_states;
         return;
+    }
 
+    void plan_future_deliveries(int time_limit, SharedEnvironment *env) {
+
+      for(int i = 1; i < num_network_timesteps; i++){ // start from 1 as first timestep is already added to agent path
+        int count = 0;
+        for(auto& [agent_id, agent_path]: delivering_agent_paths){
+
+          int task_id = env->curr_task_schedule[agent_id];
+          
+
+
+
+
+
+        }
+      }
+
+
+
+
+
+
+
+      cout << "Get delivery plans function" << endl;
     };
 
     void plan_pibt(int time_limit,vector<Action> & actions, SharedEnvironment* env)
