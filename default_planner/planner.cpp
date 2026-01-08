@@ -24,7 +24,7 @@ namespace DefaultPlanner{
     std::mt19937 mt1;
     TrajLNS trajLNS;
     int num_network_timesteps;
-    unordered_map<int, vector<int>> delivery_agent_paths;
+    unordered_map<int, vector<int>> delivering_agent_paths;
 
 
     // std::vector<Int4> get_flow() 
@@ -34,7 +34,7 @@ namespace DefaultPlanner{
 
     unordered_map<int, vector<int>> get_delivery_agent_paths()
     {
-      return delivery_agent_paths;
+      return delivering_agent_paths;
     }
 
     std::vector<Double4> get_opened_flow(SharedEnvironment *env)
@@ -84,7 +84,6 @@ namespace DefaultPlanner{
             decided.resize(env->num_of_agents,DCR({-1,DONE::DONE}));
             occupied.resize(env->map.size(),false);
             checked.resize(env->num_of_agents,false);
-            is_delivering.resize(env->num_of_agents,false);
             ids.resize(env->num_of_agents);
             require_guide_path.resize(env->num_of_agents,false);
             for (int i = 0; i < ids.size();i++){
@@ -134,10 +133,7 @@ namespace DefaultPlanner{
         TimePoint end_time = start_time + std::chrono::milliseconds(time_limit - pibt_time - TRAFFIC_FLOW_ASSIGNMENT_END_TIME_TOLERANCE); 
         cout << "plan limit " << time_limit <<endl;
         // reset delivery agent paths and is_delivering to restart in this time-step
-        delivery_agent_paths.clear();
-        for(int i = 0; i < env->num_of_agents; i++){
-          is_delivering[i] = false;
-        }
+        delivering_agent_paths.clear();
 
         // recrod the initial location of each agent as dummy goals in case no goal is assigned to the agent.
         if (env->curr_timestep == 0){
@@ -166,11 +162,6 @@ namespace DefaultPlanner{
                             count++;
                         }
                 }
-            }
-            
-            // Check if the agent is delivering a task
-            if (env->goal_locations[i].size() == 1){
-              is_delivering[i] = true;
             }
 
             // set the goal location of each agent
@@ -300,20 +291,15 @@ namespace DefaultPlanner{
         //     }
         // }
 
-        // Add first path step to delivering agents
-        for (int i = 0; i < env->num_of_agents;i++)
+        // Add first path step to delivery agents
+        for (int agent_id = 0; agent_id < env->num_of_agents; agent_id++)
         {
-          if(is_delivering[i]){
-            delivery_agent_paths[i].push_back(next_states[i].location);
-          }
-        }
+          int task_id = env->curr_task_schedule[agent_id];
+          bool is_delivering_agent = task_id == -1 ? false : env->task_pool[task_id].idx_next_loc > 0;
 
-        for(const auto& [agent, path_states] : delivery_agent_paths){
-          cout << "agent" << agent << ": ";
-          for(int i = 0; i < path_states.size(); i++){
-            cout << path_states[i] << ", ";
+          if(is_delivering_agent){
+            delivering_agent_paths[agent_id].push_back(next_states[agent_id].location);
           }
-          cout << endl;
         }
 
         prev_states = next_states;
