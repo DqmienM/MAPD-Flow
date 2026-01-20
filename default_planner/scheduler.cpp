@@ -1039,16 +1039,6 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
     vector<int>flexible_task_ids; //storing the tasks we consider to swap/assign
     unordered_map<int,list<int>> task_loc_ids;
 
-    cout << "-----AGENT PATHS IN SCHEDULER------" << endl;
-    for (auto &[agent, path]: delivery_agent_paths){
-      cout << agent << ": ";
-      for(int step: path){
-        cout << step << ", ";
-      }
-      cout << endl;
-    }
-    cout << "----------------------------------" << endl;
-
     for (auto task: env->task_pool)
     {
         if (task.second.idx_next_loc > 0) //task opened
@@ -1103,7 +1093,7 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
     unordered_map<int, int> node_to_maploc; // map graph node id to env->map index
     unordered_map<int, bool> node_to_is_duplicate; // map graph node id to whether it is a duplicate
 
-    // Create a node (and its duplicate to prevent collisions) for every location on the map
+    // Create a node (and its duplicate to prevent node collisions) for every location on the map
     for(int i = 0; i < num_network_timesteps; i++){
       for(int j = 0; j < env->map.size(); j++){
 
@@ -1205,6 +1195,35 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
             capacity[c] = num_workers;
         }
     }
+
+    // cout << "-----DELIVERY AGENT PATHS BEING BLOCKED IN NETWORK------" << endl;
+    // for (auto &[agent, path]: delivery_agent_paths){
+    //   cout << agent << ": ";
+    //   for(int i = 0; i < path.size(); i++){ // implicitly the index is the time-step that is affected
+    //     int time_step = i;
+    //     int map_loc = path[i];
+
+    //     // BLOCK OFF path[i] for time-step i
+    //     ListDigraph::Node current_first = time_expanded_map[time_step][map_loc].first;
+    //     ListDigraph::Node current_second = time_expanded_map[time_step][map_loc].second;
+    //     ListDigraph::Arc a = findArc(g, current_first, current_second);
+    //     cout << "Blocked vertex arc: " << g.valid(a) << endl;
+    //     capacity[a] = 0;
+
+    //     // BLOCK OFF path[i+1] to path[i] for time-step i -> i+1 (Prevent edge collision)
+    //     if(i < path.size() - 1){
+    //       int next_map_loc = path[i+1];
+    //       ListDigraph::Node dest_second = time_expanded_map[time_step][next_map_loc].second;
+    //       ListDigraph::Node next_current_first = time_expanded_map[time_step+1][map_loc].first;
+    //       ListDigraph::Arc b = findArc(g, dest_second, next_current_first);
+    //       capacity[b] = 0;
+    //       cout << "Blocked edge arc: " << g.valid(b) << endl;
+    //     }
+    //     // cout << path[i] << endl;
+    //   }
+    // }
+    // cout << "----------------------------------" << endl;
+
 
     unordered_map<int,int> edge_flows; //arc id, flow count
 
