@@ -67,3 +67,7 @@ std::vector<DefaultPlanner::Double4> MAPFPlanner::get_flow()
     // return DefaultPlanner::get_flow();
     return DefaultPlanner::get_opened_flow(env);
 }
+
+unordered_map<int,vector<int>> MAPFPlanner::get_delivery_agent_paths(){
+  return DefaultPlanner::get_delivery_agent_paths();
+}

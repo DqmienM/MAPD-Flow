@@ -1027,7 +1027,7 @@ void schedule_plan_flow_hist(int time_limit, std::vector<int> & proposed_schedul
 
 }
 
-void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & proposed_schedule,  SharedEnvironment* env, std::vector<Double4> background_flow, bool use_traffic, bool new_only, int num_network_timesteps)
+void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & proposed_schedule,  SharedEnvironment* env, std::vector<Double4> background_flow, bool use_traffic, bool new_only, int num_network_timesteps, unordered_map<int, vector<int>> delivery_agent_paths)
 {
     auto start_time = std::chrono::high_resolution_clock::now();
 
@@ -1038,6 +1038,16 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
     vector<int>flexible_agent_ids(env->new_freeagents); //storing the agents not doing a opened task
     vector<int>flexible_task_ids; //storing the tasks we consider to swap/assign
     unordered_map<int,list<int>> task_loc_ids;
+
+    cout << "-----AGENT PATHS IN SCHEDULER------" << endl;
+    for (auto &[agent, path]: delivery_agent_paths){
+      cout << agent << ": ";
+      for(int step: path){
+        cout << step << ", ";
+      }
+      cout << endl;
+    }
+    cout << "----------------------------------" << endl;
 
     for (auto task: env->task_pool)
     {

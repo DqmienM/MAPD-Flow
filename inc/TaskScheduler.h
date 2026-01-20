@@ -22,6 +22,7 @@ class TaskScheduler
         void set_solver(int solver);
         void set_max_matching_edges(int max_matching_edges);
         void set_num_network_timesteps(int num_network_timesteps);
+        void set_delivery_agent_paths(unordered_map<int, vector<int>> delivery_agent_paths);
         int get_num_network_timesteps();
 
         std::vector<DefaultPlanner::Double4> background_flow;
@@ -31,4 +32,5 @@ class TaskScheduler
         int solver = 1; //1 flow, 3 matching
         int max_matching_edges = INT_MAX;
         int num_network_timesteps = 1;
+        unordered_map<int, vector<int>> delivery_agent_paths;
 };

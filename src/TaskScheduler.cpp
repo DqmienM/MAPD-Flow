@@ -57,7 +57,7 @@ void TaskScheduler::plan(int time_limit, std::vector<int> & proposed_schedule)
     }
     else  if (solver == 6)
     {
-        DefaultPlanner::schedule_plan_flow_time_expanded(limit, proposed_schedule, env, background_flow, use_traffic, new_only, num_network_timesteps);
+        DefaultPlanner::schedule_plan_flow_time_expanded(limit, proposed_schedule, env, background_flow, use_traffic, new_only, num_network_timesteps, delivery_agent_paths);
     }
     else
     {
@@ -90,6 +90,9 @@ void TaskScheduler::set_max_matching_edges(int max_matching_edges)
 void TaskScheduler::set_num_network_timesteps(int num_network_timesteps)
 {
     this->num_network_timesteps = num_network_timesteps;
+}
+void TaskScheduler::set_delivery_agent_paths(unordered_map<int,vector<int>> delivery_agent_paths){
+    this->delivery_agent_paths = delivery_agent_paths;
 }
 int TaskScheduler::get_num_network_timesteps(){
   return this->num_network_timesteps;

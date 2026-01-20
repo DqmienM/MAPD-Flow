@@ -21,5 +21,6 @@ public:
     virtual void plan_time_expanded(int time_limit, std::vector<Action> & plan);
 
     std::vector<DefaultPlanner::Double4> get_flow();
+    unordered_map<int, vector<int>> get_delivery_agent_paths();
     void plan_pibt(int time_limit,vector<Action> & actions); 
 };

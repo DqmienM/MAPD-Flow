@@ -28,6 +28,7 @@ void Entry::compute(int time_limit, std::vector<Action> & plan, std::vector<int>
     planner->plan_time_expanded(time_limit, plan);
     
     scheduler->set_flow(planner->get_flow());
+    scheduler->set_delivery_agent_paths(planner->get_delivery_agent_paths());
     scheduler->plan(time_limit,proposed_schedule);
 
     //then update the first unfinished errand/location of tasks for planner reference
