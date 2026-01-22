@@ -1197,31 +1197,35 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
     }
 
     // cout << "-----DELIVERY AGENT PATHS BEING BLOCKED IN NETWORK------" << endl;
-    // for (auto &[agent, path]: delivery_agent_paths){
-    //   cout << agent << ": ";
-    //   for(int i = 0; i < path.size(); i++){ // implicitly the index is the time-step that is affected
-    //     int time_step = i;
-    //     int map_loc = path[i];
+    for (auto &[agent, path]: delivery_agent_paths){
+      // cout << agent << ": ";
+      for(int i = 0; i < path.size(); i++){ // implicitly the index is the time-step that is affected
+        int time_step = i;
+        int map_loc = path[i];
 
-    //     // BLOCK OFF path[i] for time-step i
-    //     ListDigraph::Node current_first = time_expanded_map[time_step][map_loc].first;
-    //     ListDigraph::Node current_second = time_expanded_map[time_step][map_loc].second;
-    //     ListDigraph::Arc a = findArc(g, current_first, current_second);
-    //     cout << "Blocked vertex arc: " << g.valid(a) << endl;
-    //     capacity[a] = 0;
+        // BLOCK OFF path[i] for time-step i
+        ListDigraph::Node current_first = time_expanded_map[time_step][map_loc].first;
+        ListDigraph::Node current_second = time_expanded_map[time_step][map_loc].second;
+        ListDigraph::Arc arc_for_current_node = findArc(g, current_first, current_second);
+        capacity[arc_for_current_node] = 0;
+        // if(g.valid(arc_for_current_node)){
+        //   cout << "Blocked node arc: " << map_loc << endl;
+        // }
 
-    //     // BLOCK OFF path[i+1] to path[i] for time-step i -> i+1 (Prevent edge collision)
-    //     if(i < path.size() - 1){
-    //       int next_map_loc = path[i+1];
-    //       ListDigraph::Node dest_second = time_expanded_map[time_step][next_map_loc].second;
-    //       ListDigraph::Node next_current_first = time_expanded_map[time_step+1][map_loc].first;
-    //       ListDigraph::Arc b = findArc(g, dest_second, next_current_first);
-    //       capacity[b] = 0;
-    //       cout << "Blocked edge arc: " << g.valid(b) << endl;
-    //     }
-    //     // cout << path[i] << endl;
-    //   }
-    // }
+        // BLOCK OFF path[i+1] to path[i] for time-step i -> i+1 (Prevent edge collision)
+        if(i < path.size() - 1){
+          int next_map_loc = path[i+1];
+          ListDigraph::Node dest_second = time_expanded_map[time_step][next_map_loc].second;
+          ListDigraph::Node next_current_first = time_expanded_map[time_step+1][map_loc].first;
+          ListDigraph::Arc arc_for_colliding_edge = findArc(g, dest_second, next_current_first);
+          capacity[arc_for_colliding_edge] = 0;
+
+          // if(g.valid(arc_for_colliding_edge)){
+          //   cout << "Blocked edge arc: " << next_map_loc << "->" << map_loc << endl;
+          // }
+        }
+      }
+    }
     // cout << "----------------------------------" << endl;
 
 
