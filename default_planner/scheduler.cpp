@@ -1315,7 +1315,7 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
     // End timing
     auto end_time = std::chrono::high_resolution_clock::now();
     double elapsed_time = std::chrono::duration<double>(end_time - start_time).count();
-    cout << "Solving time: " << elapsed_time << " seconds" << endl;
+    cout << "Scheduler Solving time: " << elapsed_time << " seconds" << endl;
 
 }
 
