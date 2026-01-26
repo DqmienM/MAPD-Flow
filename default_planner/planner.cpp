@@ -21,10 +21,12 @@ namespace DefaultPlanner{
     std::vector<bool> checked;
     std::vector<bool> require_guide_path;
     std::vector<int> dummy_goals;
+    std::vector<std::vector<int>> agent_loc_history;
     std::mt19937 mt1;
     TrajLNS trajLNS;
     int num_network_timesteps;
     unordered_map<int, vector<int>> delivering_agent_paths;
+    vector<unordered_map<int, vector<int>>> delivering_agent_paths_history;
 
 
     // std::vector<Int4> get_flow() 
@@ -86,6 +88,7 @@ namespace DefaultPlanner{
             checked.resize(env->num_of_agents,false);
             ids.resize(env->num_of_agents);
             require_guide_path.resize(env->num_of_agents,false);
+            agent_loc_history.resize(env->num_of_agents, vector<int>());
             for (int i = 0; i < ids.size();i++){
                 ids[i] = i;
             }
@@ -186,6 +189,7 @@ namespace DefaultPlanner{
             prev_states[i] = env->curr_states[i];
             next_states[i] = State();
             prev_decision[env->curr_states[i].location] = i; 
+            agent_loc_history[i].push_back(env->curr_states[i].location);
             if (decided[i].loc == -1){
                 decided[i].loc = env->curr_states[i].location;
                 assert(decided[i].state == DONE::DONE);
@@ -321,7 +325,6 @@ namespace DefaultPlanner{
       // LOOP OVER NUMBER OF TIME-STEPS
       for(int i = 2; i < num_network_timesteps; i++){ // start from 2 as first positions are already added to agent path
 
-
         // data structure for recording the previous decision of each agent
         prev_decision.clear();
         prev_decision.resize(env->map.size(), -1);
@@ -383,6 +386,10 @@ namespace DefaultPlanner{
           }
         }
       }
+
+      delivering_agent_paths_history.push_back(delivering_agent_paths);
+
+      display_future_path_accuracy(env);
 
       // Display the current delivering agent paths
       // for(const auto& [agent_id, agent_path]: delivering_agent_paths){
@@ -510,4 +517,28 @@ namespace DefaultPlanner{
         return;
 
     };
+
+    void display_future_path_accuracy(SharedEnvironment* env){
+      for(int i=0; i<env->num_of_agents; i++){
+        if(env->curr_timestep >= num_network_timesteps){
+          int compared_timestep = env->curr_timestep - num_network_timesteps + 1;
+          vector<int> predicted_path = delivering_agent_paths_history[compared_timestep][i];
+          vector<int> actual_path = vector<int>(agent_loc_history[i].end() - num_network_timesteps, agent_loc_history[i].end());
+
+          if(!predicted_path.empty()){
+
+            int count = 0;
+            cout << i << ": ";
+            for(int j=0; j<predicted_path.size(); j++){
+              if(predicted_path[j] == actual_path[j]){
+                count++;
+              }
+              cout << "[" << predicted_path[j] << "," << actual_path[j] << "]";
+            }
+            cout << " " << (double)count / (double)predicted_path.size();
+            cout << endl;
+          }
+        }
+      }
+    }
 }
