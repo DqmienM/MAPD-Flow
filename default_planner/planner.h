@@ -20,6 +20,7 @@ namespace DefaultPlanner{
     unordered_map<int,vector<int>> get_delivery_agent_paths();
     std::vector<Double4> get_opened_flow(SharedEnvironment* env);
     void plan_pibt(int time_limit,vector<Action> & actions, SharedEnvironment* env);
-    void display_future_path_accuracy(SharedEnvironment* env);
+    void display_delivering_agent_paths();
+    void display_future_path_accuracy(SharedEnvironment *env);
 }
 #endif
