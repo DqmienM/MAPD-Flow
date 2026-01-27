@@ -428,8 +428,8 @@ namespace DefaultPlanner{
 
       delivering_agent_paths_history.push_back(delivering_agent_paths);
 
-      display_future_path_accuracy(env);
-      display_delivering_agent_paths();
+      display_future_path_accuracy(env, false);
+      // display_delivering_agent_paths();
     }
 
     void plan_pibt(int time_limit,vector<Action> & actions, SharedEnvironment* env)
@@ -546,7 +546,7 @@ namespace DefaultPlanner{
       cout << "-----------------------" << endl;
     }
 
-    void display_future_path_accuracy(SharedEnvironment* env){
+    void display_future_path_accuracy(SharedEnvironment* env, bool verbose){
       double agent_accuracy = 0;
       int num_paths = 0;
 
@@ -560,16 +560,18 @@ namespace DefaultPlanner{
             num_paths += 1;
 
             int count = 0;
-            cout << i << ": ";
+            if(verbose) cout << i << ": ";
             for(int j=0; j<predicted_path.size(); j++){
               if(predicted_path[j] == actual_path[j]){
                 count++;
               }
-              cout << "[" << predicted_path[j] << "," << actual_path[j] << "] ";
+              if(verbose) cout << "[" << predicted_path[j] << "," << actual_path[j] << "] ";
             }
             agent_accuracy += (double)count / (double)predicted_path.size();
-            cout << (double)count / (double)predicted_path.size();
-            cout << endl;
+            if(verbose) {
+              cout << (double)count / (double)predicted_path.size();
+              cout << endl;
+            }
           }
         }
       }
