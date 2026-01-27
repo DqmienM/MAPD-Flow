@@ -335,7 +335,10 @@ namespace DefaultPlanner{
 
 
       // LOOP OVER NUMBER OF TIME-STEPS
-      for(int i = 2; i < num_network_timesteps; i++){ // start from 2 as first positions are already added to agent path
+
+
+      int max_agent_timesteps = 3;
+      for(int i = 2; i < max_agent_timesteps; i++){ // start from 2 as first positions are already added to agent path
 
         // data structure for recording the previous decision of each agent
         prev_decision.clear();
@@ -428,7 +431,7 @@ namespace DefaultPlanner{
 
       delivering_agent_paths_history.push_back(delivering_agent_paths);
 
-      display_future_path_accuracy(env, false);
+      display_future_path_accuracy(env, true);
       // display_delivering_agent_paths();
     }
 
