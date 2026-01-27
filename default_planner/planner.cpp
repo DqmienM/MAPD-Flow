@@ -27,6 +27,7 @@ namespace DefaultPlanner{
     int num_network_timesteps;
     unordered_map<int, vector<int>> delivering_agent_paths;
     vector<unordered_map<int, vector<int>>> delivering_agent_paths_history;
+    std::vector<bool> agent_has_reached_goal;
 
 
     // std::vector<Int4> get_flow() 
@@ -136,6 +137,10 @@ namespace DefaultPlanner{
         TimePoint end_time = start_time + std::chrono::milliseconds(time_limit - pibt_time - TRAFFIC_FLOW_ASSIGNMENT_END_TIME_TOLERANCE); 
         cout << "plan limit " << time_limit <<endl;
         delivering_agent_paths.clear();
+
+        // data structure for tracking if agent has reached goal
+        agent_has_reached_goal.clear();
+        agent_has_reached_goal.resize(env->num_of_agents, false);
 
         // record the initial location of each agent as dummy goals in case no goal is assigned to the agent.
         if (env->curr_timestep == 0){
@@ -295,125 +300,136 @@ namespace DefaultPlanner{
         // }
 
         // Add first 2 path steps for delivering agents 
-        // for (int agent_id = 0; agent_id < env->num_of_agents; agent_id++)
-        // {
-        //   int task_id = env->curr_task_schedule[agent_id];
-        //   bool is_delivering_agent = task_id == -1 ? false : env->task_pool[task_id].idx_next_loc > 0;
+        for (int agent_id = 0; agent_id < env->num_of_agents; agent_id++)
+        {
+          int task_id = env->curr_task_schedule[agent_id];
+          bool is_delivering_agent = task_id == -1 ? false : env->task_pool[task_id].idx_next_loc > 0;
 
-        //   if(is_delivering_agent){
-        //     delivering_agent_paths[agent_id].push_back(prev_states[agent_id].location);
-        //     delivering_agent_paths[agent_id].push_back(next_states[agent_id].location);
-        //   }
-        // }
+          if(is_delivering_agent){
+            delivering_agent_paths[agent_id].push_back(prev_states[agent_id].location);
+          }
+
+          if(next_states[agent_id].location == trajLNS.tasks[agent_id]){
+            agent_has_reached_goal[agent_id] = true;
+          }
+
+          if(is_delivering_agent && !agent_has_reached_goal[agent_id]){ 
+            delivering_agent_paths[agent_id].push_back(next_states[agent_id].location);
+          }
+        }
 
         prev_states = next_states;
         return;
     }
 
     void plan_future_deliveries(int time_limit, SharedEnvironment *env) {
-      // // calculate the time planner should stop optimsing traffic flows and return the plan.
-      // TimePoint start_time = std::chrono::steady_clock::now();
-      // //cap the time for distance to goal heuristic table initialisation to half of the given time_limit;
-      // int pibt_time = PIBT_RUNTIME_PER_100_AGENTS * env->num_of_agents/100;
-      // //traffic flow assignment end time, leave PIBT_RUNTIME_PER_100_AGENTS ms per 100 agent and TRAFFIC_FLOW_ASSIGNMENT_END_TIME_TOLERANCE ms for computing pibt actions;
-      // TimePoint end_time = start_time + std::chrono::milliseconds(time_limit - pibt_time - TRAFFIC_FLOW_ASSIGNMENT_END_TIME_TOLERANCE); 
+      // calculate the time planner should stop optimsing traffic flows and return the plan.
+      TimePoint start_time = std::chrono::steady_clock::now();
+      //cap the time for distance to goal heuristic table initialisation to half of the given time_limit;
+      int pibt_time = PIBT_RUNTIME_PER_100_AGENTS * env->num_of_agents/100;
+      //traffic flow assignment end time, leave PIBT_RUNTIME_PER_100_AGENTS ms per 100 agent and TRAFFIC_FLOW_ASSIGNMENT_END_TIME_TOLERANCE ms for computing pibt actions;
+      TimePoint end_time = start_time + std::chrono::milliseconds(time_limit - pibt_time - TRAFFIC_FLOW_ASSIGNMENT_END_TIME_TOLERANCE); 
 
-      // std::vector<double> p_future_sim = p;
-      // std::vector<int> decision_future_sim = decision; 
+      std::vector<double> p_future_sim = p;
+      std::vector<int> decision_future_sim = decision; 
 
 
-      // // LOOP OVER NUMBER OF TIME-STEPS
-      // for(int i = 2; i < num_network_timesteps; i++){ // start from 2 as first positions are already added to agent path
+      // LOOP OVER NUMBER OF TIME-STEPS
+      for(int i = 2; i < num_network_timesteps; i++){ // start from 2 as first positions are already added to agent path
 
-      //   // data structure for recording the previous decision of each agent
-      //   prev_decision.clear();
-      //   prev_decision.resize(env->map.size(), -1);
+        // data structure for recording the previous decision of each agent
+        prev_decision.clear();
+        prev_decision.resize(env->map.size(), -1);
 
-      //   // update the status of each agent and prepare for planning
-      //   for(int i=0; i<env->num_of_agents; i++)
-      //   {
-      //     // check if the agent completed the action in the previous timestep
-      //     // if not, the agent is till turning towards the action direction, we do not need to plan new action for the agent
-      //     assert(next_states[i].location >=0);
-      //     prev_states[i] = next_states[i];
-      //     next_states[i] = State();
-      //     prev_decision[prev_states[i].location] = i; 
+        // update the status of each agent and prepare for planning
+        for(int i=0; i<env->num_of_agents; i++)
+        {
+          // check if the agent completed the action in the previous timestep
+          // if not, the agent is till turning towards the action direction, we do not need to plan new action for the agent
+          assert(next_states[i].location >=0);
+          
+          prev_states[i] = next_states[i];
+          if(agent_has_reached_goal[i]){
+            next_states[i] = prev_states[i];
+          }
+          else{
+            next_states[i] = State();
+          }
+          prev_decision[prev_states[i].location] = i; 
 
-      //     // FIGURE OUT WHAT THIS DOES
-      //     if(prev_states[i].location == trajLNS.tasks[i]) // if prev state made it to the goal location
-      //       p_future_sim[i] = p_copy[i];
-      //     else if (!env->goal_locations[i].empty()) // if hasn't reached goal yet
-      //       p_future_sim[i] += 1;
+          if(prev_states[i].location == trajLNS.tasks[i]) // if prev state made it to the goal location
+            p_future_sim[i] = p_copy[i];
+          else if (!env->goal_locations[i].empty()) // if hasn't reached goal yet
+            p_future_sim[i] += 1;
 
-      //     // give priority bonus to the agent if the agent is in a deadend location
-      //     if (!env->goal_locations[i].empty() && trajLNS.neighbors[prev_states[i].location].size() == 1){
-      //         p_future_sim[i] += 10;
+          // give priority bonus to the agent if the agent is in a deadend location
+          if (!env->goal_locations[i].empty() && trajLNS.neighbors[prev_states[i].location].size() == 1){
+              p_future_sim[i] += 10;
+          }
+        }
+
+        // sort agents based on the current priority
+        std::sort(ids.begin(), ids.end(), [&](int a, int b) {
+                return p_future_sim.at(a) > p_future_sim.at(b);
+            }
+        );
+
+        cout <<"future planner time used: " <<  std::chrono::duration_cast<milliseconds>(std::chrono::steady_clock::now() - env->plan_start_time).count() <<endl;;
+        //pibt
+        for (int i : ids)
+        {
+            if (next_states[i].location==-1)
+            {
+                assert(prev_states[i].location >=0 && prev_states[i].location < env->map.size());
+                causalPIBT(i,-1,prev_states,next_states,
+                    prev_decision,decision_future_sim,
+                    occupied, trajLNS);
+            }
+        }
+
+        for (int id : ids)
+        {
+            //clear the decision table based on which agent has next_states
+            if (next_states.at(id).location!= -1)
+                decision_future_sim.at(next_states.at(id).location) = -1;
+        }
+
+        
+
+        for(int agent_id = 0; agent_id < env->num_of_agents; agent_id++){
+          int task_id = env->curr_task_schedule[agent_id];
+          bool is_delivering_agent = task_id == -1 ? false : env->task_pool[task_id].idx_next_loc > 0;
+
+          if(next_states[agent_id].location == trajLNS.tasks[agent_id]){
+            agent_has_reached_goal[agent_id] = true;
+          }
+
+          if(is_delivering_agent && !agent_has_reached_goal[agent_id]){ 
+            delivering_agent_paths[agent_id].push_back(next_states[agent_id].location); 
+          }
+          
+        }
+      }
+
+      // Add next path step for delivering agents (ALTERNATIVE APPROXIMATION APPROACH)
+      // delivering_agent_paths.clear();
+      // for (int agent_id = 0; agent_id < env->num_of_agents; agent_id++){
+      //   int task_id = env->curr_task_schedule[agent_id];
+      //   bool is_delivering_agent = task_id == -1 ? false : env->task_pool[task_id].idx_next_loc > 0;
+      //   if(is_delivering_agent){ 
+      //     vector<int> agent_traj_vector = trajLNS.trajs[agent_id];
+      //     if(agent_traj_vector.size() >= num_network_timesteps){
+      //       agent_traj_vector.resize(num_network_timesteps);
       //     }
-      //   }
 
-      //   // sort agents based on the current priority
-      //   std::sort(ids.begin(), ids.end(), [&](int a, int b) {
-      //           return p_future_sim.at(a) > p_future_sim.at(b);
-      //       }
-      //   );
-
-      //   cout <<"future planner time used: " <<  std::chrono::duration_cast<milliseconds>(std::chrono::steady_clock::now() - env->plan_start_time).count() <<endl;;
-      //   //pibt
-      //   for (int i : ids)
-      //   {
-      //       if (next_states[i].location==-1)
-      //       {
-      //           assert(prev_states[i].location >=0 && prev_states[i].location < env->map.size());
-      //           causalPIBT(i,-1,prev_states,next_states,
-      //               prev_decision,decision_future_sim,
-      //               occupied, trajLNS);
-      //       }
-      //   }
-
-      //   for (int id : ids)
-      //   {
-      //       //clear the decision table based on which agent has next_states
-      //       if (next_states.at(id).location!= -1)
-      //           decision_future_sim.at(next_states.at(id).location) = -1;
-      //   }
-
-      //   for(int agent_id = 0; agent_id < env->num_of_agents; agent_id++){
-      //     int task_id = env->curr_task_schedule[agent_id];
-      //     bool is_delivering_agent = task_id == -1 ? false : env->task_pool[task_id].idx_next_loc > 0;
-
-      //     if(is_delivering_agent){ 
-      //       delivering_agent_paths[agent_id].push_back(next_states[agent_id].location); // NOT STOPPING WHEN AT GOAL
-      //     }
+      //     delivering_agent_paths[agent_id] = agent_traj_vector;
       //   }
       // }
 
-      // delivering_agent_paths_history.push_back(delivering_agent_paths);
-
-      // display_delivering_agent_paths();
-      // display_future_path_accuracy(env);
-
-      
-
-      // Add next path step for delivering agents
-      for (int agent_id = 0; agent_id < env->num_of_agents; agent_id++){
-        int task_id = env->curr_task_schedule[agent_id];
-        bool is_delivering_agent = task_id == -1 ? false : env->task_pool[task_id].idx_next_loc > 0;
-        if(is_delivering_agent){ 
-          vector<int> agent_traj_vector = trajLNS.trajs[agent_id];
-          if(agent_traj_vector.size() >= num_network_timesteps){
-            agent_traj_vector.resize(num_network_timesteps);
-          }
-
-          delivering_agent_paths[agent_id] = agent_traj_vector;
-        }
-      }
       delivering_agent_paths_history.push_back(delivering_agent_paths);
 
       display_future_path_accuracy(env);
-
-      // display_delivering_agent_paths();
-
-
+      display_delivering_agent_paths();
     }
 
     void plan_pibt(int time_limit,vector<Action> & actions, SharedEnvironment* env)
