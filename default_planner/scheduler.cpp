@@ -1310,7 +1310,7 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
     }
     else 
     {
-        cout << "No optimal solution found." << endl;
+        cout << "\033[33m" << "No optimal solution found." << "\033[0m" << endl;
     }
     // End timing
     auto end_time = std::chrono::high_resolution_clock::now();
