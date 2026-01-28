@@ -9,4 +9,3 @@ python/tmp
 python/__pycache__
 output.json
 outputs/
-run_tests.sh
