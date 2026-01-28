@@ -25,6 +25,7 @@ namespace DefaultPlanner{
     std::mt19937 mt1;
     TrajLNS trajLNS;
     int num_network_timesteps;
+    int num_agent_simulated_timesteps;
     unordered_map<int, vector<int>> delivering_agent_paths;
     vector<unordered_map<int, vector<int>>> delivering_agent_paths_history;
     std::vector<bool> agent_has_reached_goal;
@@ -94,6 +95,7 @@ namespace DefaultPlanner{
                 ids[i] = i;
             }
             DefaultPlanner::num_network_timesteps = num_network_timesteps;
+            num_agent_simulated_timesteps = 2; // should be less than num_network_timesteps
 
             // initialise the heuristics tables containers
             init_heuristics(env);
@@ -299,15 +301,11 @@ namespace DefaultPlanner{
         //     }
         // }
 
-        // Add first 2 path steps for delivering agents 
+        // Add first path step for delivering agents 
         for (int agent_id = 0; agent_id < env->num_of_agents; agent_id++)
         {
           int task_id = env->curr_task_schedule[agent_id];
           bool is_delivering_agent = task_id == -1 ? false : env->task_pool[task_id].idx_next_loc > 0;
-
-          if(is_delivering_agent){
-            delivering_agent_paths[agent_id].push_back(prev_states[agent_id].location);
-          }
 
           if(next_states[agent_id].location == trajLNS.tasks[agent_id]){
             agent_has_reached_goal[agent_id] = true;
@@ -333,12 +331,7 @@ namespace DefaultPlanner{
       std::vector<double> p_future_sim = p;
       std::vector<int> decision_future_sim = decision; 
 
-
-      // LOOP OVER NUMBER OF TIME-STEPS
-
-
-      int max_agent_timesteps = 3;
-      for(int i = 2; i < max_agent_timesteps; i++){ // start from 2 as first positions are already added to agent path
+      for(int _ = 1; _ < num_agent_simulated_timesteps; _++){ // start from 2 as first positions are already added to agent path
 
         // data structure for recording the previous decision of each agent
         prev_decision.clear();
@@ -413,21 +406,6 @@ namespace DefaultPlanner{
           
         }
       }
-
-      // Add next path step for delivering agents (ALTERNATIVE APPROXIMATION APPROACH)
-      // delivering_agent_paths.clear();
-      // for (int agent_id = 0; agent_id < env->num_of_agents; agent_id++){
-      //   int task_id = env->curr_task_schedule[agent_id];
-      //   bool is_delivering_agent = task_id == -1 ? false : env->task_pool[task_id].idx_next_loc > 0;
-      //   if(is_delivering_agent){ 
-      //     vector<int> agent_traj_vector = trajLNS.trajs[agent_id];
-      //     if(agent_traj_vector.size() >= num_network_timesteps){
-      //       agent_traj_vector.resize(num_network_timesteps);
-      //     }
-
-      //     delivering_agent_paths[agent_id] = agent_traj_vector;
-      //   }
-      // }
 
       delivering_agent_paths_history.push_back(delivering_agent_paths);
 
@@ -550,14 +528,15 @@ namespace DefaultPlanner{
     }
 
     void display_future_path_accuracy(SharedEnvironment* env, bool verbose){
+      // Displays how accurate guesses num timesteps ago were
       double agent_accuracy = 0;
       int num_paths = 0;
 
       for(int i=0; i<env->num_of_agents; i++){
-        if(env->curr_timestep >= num_network_timesteps){
-          int compared_timestep = env->curr_timestep - num_network_timesteps + 1;
+        if(env->curr_timestep >= num_agent_simulated_timesteps){
+          int compared_timestep = env->curr_timestep - num_agent_simulated_timesteps;
           vector<int> predicted_path = delivering_agent_paths_history[compared_timestep][i];
-          vector<int> actual_path = vector<int>(agent_loc_history[i].end() - num_network_timesteps, agent_loc_history[i].end());
+          vector<int> actual_path = vector<int>(agent_loc_history[i].end() - num_agent_simulated_timesteps, agent_loc_history[i].end());
 
           if(!predicted_path.empty()){
             num_paths += 1;
