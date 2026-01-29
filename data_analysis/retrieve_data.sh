@@ -1,0 +1,1 @@
+for i in {1..5}; do head -5 ws300_${i}_40.json | tail -1 | cut -c 24- | cut -d "," -f 1; done
