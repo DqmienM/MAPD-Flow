@@ -1,26 +1,34 @@
 #!/bin/bash
 
-# Finish off simulating 10 time-steps 5 times each for WS
+# RUN TESTS
 
-for i in {300..600..100}; do
-  for j in {2..5}; do
-    ./build/lifelong --inputFile ./instances/warehouseSmall/warehouseSmall_${i}.json -o outputs/ws${i}_${j}_10.json --scheduleModel 6 --simulationTime 1000 --networkTimeSteps 10
+for i in {100..600..100}; do 
+  for j in {5,10,20,40}; do
+    for k in {1..5}; do
+      ./build/lifelong --inputFile ./instances/warehouseSmall/warehouseSmall_${i}.json -o outputs/ws${i}_${j}_${k}.json --scheduleModel 6 --simulationTime 1000 --networkTimeSteps ${j}
+    done 
   done
 done
 
-# Simulate static tests 5 times each for WS
+
+for i in {100..600..100}; do 
+  for k in {1..5}; do
+    ./build/lifelong --inputFile ./instances/warehouseSmall/warehouseSmall_${i}.json -o outputs/ws${i}_1_${k}.json --scheduleModel 1 --simulationTime 1000
+  done 
+done
+
+# APPEND RESULTS TO CSV FILES
 
 for i in {100..600..100}; do
   for j in {1..5}; do
-    ./build/lifelong --inputFile ./instances/warehouseSmall/warehouseSmall_${i}.json -o outputs/ws${i}_${j}_old.json --scheduleModel 1 --simulationTime 1000
-  done
-done
-
-# Simulate 20 and 40 timesteps 5 times each for WS
-for i in {100..600..100}; do
-  for j in {20,40}; do
-    for k in {1..5}; do
-      ./build/lifelong --inputFile ./instances/warehouseSmall/warehouseSmall_${i}.json -o outputs/ws${i}_${k}_${j}.json --scheduleModel 6 --simulationTime 1000 --networkTimeSteps ${j} 
+    for k in {1,5,10,20,40}; do
+      data=$(head -5 outputs/ws${i}_${k}_${j}.json | tail -1 | cut -c 24- | cut -d "," -f 1)
+      if [ ${k} -eq 40 ]; then
+        delim=$'\n'
+      else
+        delim=','
+      fi	
+      printf "%s$delim" "$data" >> "data_analysis/ws${i}_data.csv"
     done
   done
 done
