@@ -28,7 +28,7 @@ for i in {100..600..100}; do
       else
         delim=','
       fi	
-      printf "%s$delim" "$data" >> "data_analysis/ws${i}_data.csv"
+      printf "${data}${delim}" >> "data_analysis/ws${i}_data.csv"
     done
   done
 done
