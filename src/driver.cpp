@@ -56,7 +56,7 @@ int main(int argc, char **argv)
         ("assignNew,n", po::value<bool>()->default_value(false), "wether new agents only or allow task swapping")
         ("scheduleModel,m", po::value<int>()->default_value(1), "scheduler model, 1- flow, 2- flow with history edge cost, 3- matching + dijkstra, 4- matching + lazily stored h, 5- greedy, 6- time-expanded network flow")
         ("commitWindow,w", po::value<int>()->default_value(1), "commit window")
-        ("networkTimeSteps,n", po::value<int>()->default_value(20), "Number of timesteps to simulate for time-expanded network scheduler, planner 6");
+        ("networkTimeSteps,n", po::value<int>()->default_value(1), "Number of timesteps to simulate for time-expanded network scheduler, planner 6");
     clock_t start_time = clock();
     po::store(po::parse_command_line(argc, argv, desc), vm);
 
