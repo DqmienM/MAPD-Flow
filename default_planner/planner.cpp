@@ -555,6 +555,9 @@ namespace DefaultPlanner{
           }
         }
       }
-      cout << "TOTAL ACCURACY: " << agent_accuracy / num_paths << endl;
+      if(num_paths > 0){
+        cout << "TOTAL ACCURACY: " << agent_accuracy / num_paths << endl;
+      }
+      
     }
 }
