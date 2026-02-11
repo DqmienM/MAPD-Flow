@@ -407,7 +407,7 @@ namespace DefaultPlanner{
 
       delivering_agent_paths_history.push_back(delivering_agent_paths);
 
-      display_future_path_accuracy(env, num_delivery_simulated_timesteps, true);
+      // display_future_path_accuracy(env, num_delivery_simulated_timesteps, true);
       // display_delivering_agent_paths();
     }
 
