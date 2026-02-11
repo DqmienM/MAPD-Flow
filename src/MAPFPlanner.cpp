@@ -50,7 +50,7 @@ void MAPFPlanner::plan_time_expanded(int time_limit, std::vector<Action> & actio
 
   DefaultPlanner::plan(limit, actions, env, DefaultPlanner::get_guide_path());
   // Run multiple plan instances and store a guide path in order to pass it to the scheduler to use in the time-expanded flow
-  DefaultPlanner::plan_future_deliveries(limit, env);
+  DefaultPlanner::plan_future_deliveries(limit, env, num_delivery_simulated_timesteps);
   return;
 }
 
@@ -72,4 +72,8 @@ std::vector<DefaultPlanner::Double4> MAPFPlanner::get_flow()
 
 unordered_map<int,vector<int>> MAPFPlanner::get_delivery_agent_paths(){
   return DefaultPlanner::get_delivery_agent_paths();
+}
+
+void MAPFPlanner::set_num_delivery_simulated_timesteps(int num_delivery_simulated_timesteps){
+  this->num_delivery_simulated_timesteps = num_delivery_simulated_timesteps;
 }

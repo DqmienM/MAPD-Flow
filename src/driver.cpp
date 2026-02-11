@@ -56,7 +56,8 @@ int main(int argc, char **argv)
         ("assignNew,n", po::value<bool>()->default_value(false), "wether new agents only or allow task swapping")
         ("scheduleModel,m", po::value<int>()->default_value(1), "scheduler model, 1- flow, 2- flow with history edge cost, 3- matching + dijkstra, 4- matching + lazily stored h, 5- greedy, 6- time-expanded network flow")
         ("commitWindow,w", po::value<int>()->default_value(1), "commit window")
-        ("networkTimeSteps,n", po::value<int>()->default_value(1), "Number of timesteps to simulate for time-expanded network scheduler, planner 6");
+        ("networkTimeSteps,n", po::value<int>()->default_value(1), "Number of timesteps to simulate for time-expanded network scheduler, planner 6")
+        ("blockDeliveryTimeSteps,b", po::value<int>()->default_value(0), "Number of timesteps to block off delivery agent paths in the time-expanded network scheduler, planner 6");
     clock_t start_time = clock();
     po::store(po::parse_command_line(argc, argv, desc), vm);
 
@@ -145,6 +146,7 @@ int main(int argc, char **argv)
     planner->scheduler->set_solver(vm["scheduleModel"].as<int>());
     planner->scheduler->set_num_network_timesteps(vm["networkTimeSteps"].as<int>());
     planner->commit_window = vm["commitWindow"].as<int>();
+    planner->planner->set_num_delivery_simulated_timesteps(vm["blockDeliveryTimeSteps"].as<int>());
 
     ActionModel *model = new ActionModel(grid);
     model->set_logger(logger);

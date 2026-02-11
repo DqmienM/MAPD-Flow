@@ -25,7 +25,6 @@ namespace DefaultPlanner{
     std::mt19937 mt1;
     TrajLNS trajLNS;
     int num_network_timesteps;
-    int num_agent_simulated_timesteps;
     unordered_map<int, vector<int>> delivering_agent_paths;
     vector<unordered_map<int, vector<int>>> delivering_agent_paths_history;
     std::vector<bool> agent_has_reached_goal;
@@ -95,7 +94,6 @@ namespace DefaultPlanner{
                 ids[i] = i;
             }
             DefaultPlanner::num_network_timesteps = num_network_timesteps;
-            num_agent_simulated_timesteps = 2; // should be less than num_network_timesteps
 
             // initialise the heuristics tables containers
             init_heuristics(env);
@@ -320,7 +318,7 @@ namespace DefaultPlanner{
         return;
     }
 
-    void plan_future_deliveries(int time_limit, SharedEnvironment *env) {
+    void plan_future_deliveries(int time_limit, SharedEnvironment *env, int num_delivery_simulated_timesteps) {
       // calculate the time planner should stop optimsing traffic flows and return the plan.
       TimePoint start_time = std::chrono::steady_clock::now();
       //cap the time for distance to goal heuristic table initialisation to half of the given time_limit;
@@ -331,7 +329,7 @@ namespace DefaultPlanner{
       std::vector<double> p_future_sim = p;
       std::vector<int> decision_future_sim = decision; 
 
-      for(int _ = 1; _ < num_agent_simulated_timesteps; _++){ // start from 2 as first positions are already added to agent path
+      for(int _ = 0; _ < num_delivery_simulated_timesteps; _++){ // start from 1 as first positions are already added to agent path
 
         // data structure for recording the previous decision of each agent
         prev_decision.clear();
@@ -409,7 +407,7 @@ namespace DefaultPlanner{
 
       delivering_agent_paths_history.push_back(delivering_agent_paths);
 
-      display_future_path_accuracy(env, true);
+      display_future_path_accuracy(env, num_delivery_simulated_timesteps, true);
       // display_delivering_agent_paths();
     }
 
@@ -527,36 +525,36 @@ namespace DefaultPlanner{
       cout << "-----------------------" << endl;
     }
 
-    void display_future_path_accuracy(SharedEnvironment* env, bool verbose){
+    void display_future_path_accuracy(SharedEnvironment* env, int num_delivery_simulated_timesteps, bool verbose){
       // Displays how accurate guesses num timesteps ago were
       double agent_accuracy = 0;
       int num_paths = 0;
+      num_delivery_simulated_timesteps += 1;
 
       for(int i=0; i<env->num_of_agents; i++){
-        if(env->curr_timestep >= num_agent_simulated_timesteps){
-          int compared_timestep = env->curr_timestep - num_agent_simulated_timesteps;
+        if(env->curr_timestep >= num_delivery_simulated_timesteps){
+          int compared_timestep = env->curr_timestep - num_delivery_simulated_timesteps;
           vector<int> predicted_path = delivering_agent_paths_history[compared_timestep][i];
-          vector<int> actual_path = vector<int>(agent_loc_history[i].end() - num_agent_simulated_timesteps, agent_loc_history[i].end());
+          vector<int> actual_path = vector<int>(agent_loc_history[i].end() - num_delivery_simulated_timesteps, agent_loc_history[i].end());
 
-          if(!predicted_path.empty()){
+          if(predicted_path.size() > 1){
             num_paths += 1;
 
             int count = 0;
             if(verbose) cout << i << ": ";
-            for(int j=0; j<predicted_path.size(); j++){
+            for(int j=1; j<predicted_path.size(); j++){ // go from second item as predicted path always starts with the same step as actual path
               if(predicted_path[j] == actual_path[j]){
                 count++;
               }
               if(verbose) cout << "[" << predicted_path[j] << "," << actual_path[j] << "] ";
             }
-            agent_accuracy += (double)count / (double)predicted_path.size();
+            agent_accuracy += (double)count / ((double)predicted_path.size() - 1);
             if(verbose) {
-              cout << (double)count / (double)predicted_path.size();
-              cout << endl;
+              cout << (double)count / ((double)predicted_path.size() - 1) << endl;
             }
           }
         }
       }
-      cout << "TOTAL ACCURACY: " << agent_accuracy / num_paths << endl;;
+      cout << "TOTAL ACCURACY: " << agent_accuracy / num_paths << endl;
     }
 }

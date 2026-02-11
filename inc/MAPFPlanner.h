@@ -9,6 +9,7 @@ class MAPFPlanner
 {
 public:
     SharedEnvironment* env;
+    int num_delivery_simulated_timesteps;
 
 	MAPFPlanner(SharedEnvironment* env): env(env){};
     MAPFPlanner(){env = new SharedEnvironment();};
@@ -23,4 +24,5 @@ public:
     std::vector<DefaultPlanner::Double4> get_flow();
     unordered_map<int, vector<int>> get_delivery_agent_paths();
     void plan_pibt(int time_limit,vector<Action> & actions); 
+    void set_num_delivery_simulated_timesteps(int num_delivery_simulated_timesteps);
 };
