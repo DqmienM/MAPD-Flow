@@ -1295,6 +1295,9 @@ void schedule_plan_flow_time_expanded(int time_limit, std::vector<int> & propose
                 // cout << "Worker " << i << " is assigned to Task " << task_id  << " through intermediate nodes." << endl;
                 proposed_schedule[flexible_agent_ids[i]] = task_id;
 
+                // if (env->curr_timestep >= 100) Adds guide path from network flow to be used to warm start planner
+                // agent_guide_path[flexible_agent_ids[i]] = path;
+
                 task_loc_ids[task_loc].pop_front();
 
                 if (task_loc_ids[task_loc].empty())
